@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+    div.chat {
+        background-color: darkgrey; 
+        position: fixed;
+        bottom: 0px; 
+        right: 0px;
+        height: 300px;
+        width: 600px;
+    }
+
+    div.chat.messages {
+        word-wrap: break-word;
+        max-width: 95%;
+    }
+
+    .player1turn {
+        width: 0;
+        height: 0;
+        border-left: 25px solid transparent;
+        border-right: 25px solid transparent;
+        border-top: 50px solid #000;
+        position: absolute;
+        top: 800px;
+        left: 1200px;
+        display: none;
+    }
+
+    .player2turn {
+        width: 0;
+        height: 0;
+        border-top: 25px solid transparent;
+        border-right: 50px solid #000;
+        border-bottom: 25px solid transparent;
+        position: absolute;
+        top: 600px;
+        left: 700px;
+        display: none;
+    }
+
+    .player3turn {
+        width: 0;
+        height: 0;
+        border-left: 25px solid transparent;
+        border-right: 25px solid transparent;
+        border-bottom: 50px solid #000;
+        position: absolute;
+        top: 380px;
+        left: 1200px;
+        display: none;
+    }
+
+    .player4turn {
+        width: 0;
+        height: 0;
+        border-top: 25px solid transparent;
+        border-left: 50px solid #000;
+        border-bottom: 25px solid transparent;
+        position: absolute;
+        top: 600px;
+        left: 1800px;
+        display: none;
+    }
+
+    ul.msg {
+        background-color: rgb(255,255,255,0);
+        list-style-type: none
+    }
+    </style>
+</head>
+<body>
+
+    <!--<div style="position:absolute; background-color: #0f6a3d; color:rgb(67, 24, 94); right: 80px; bottom: 80px; height: 100px; width:100px;">What an idiot</div>-->
+
+    <!-- buttons for deck of cards in the middle -->
+    <div id="deck" style="position:absolute; top: 450px; left: 1350px; height: 300px; width: 220px;">
+        <img id="card" src="/rat-a-tat-cat-back.png" style="position:absolute; top: 0px; left: 0px; height: 300px; width: 220px;">
+    </div>
+
+    <div id ="flip" style="font-family:cursive; font-size:60px; position: absolute; top: 450px; left: 900px; height: 300px; width: 220px;">
+        <img src="/rat-a-tat-cat-back.png" style="position:absolute; top: 0px; left: 0px; height: 300px; width: 220px;">
+    </div>
+
+    <!-- arrows for representing players' turn -->
+    <div id="turn1" class="player1turn"></div>
+    <div id="turn2" class="player2turn"></div>
+    <div id="turn3" class="player3turn"></div>
+    <div id="turn4" class="player4turn"></div>
+
+    <!-- defining area for each player's deck of cards -->
+    <div id="p1deck" style="background-color: aqua; position: absolute; bottom: 8%; left: 29%; height: 25%; width: 39%;"></div>
+    <div id="p2deck" style="background-color: chartreuse; position: absolute; top: 18%; left: 8%; height: 60%; width: 18%;"></div>
+    <div id="p3deck" style="background-color: cyan; position: absolute; top: 3%; left: 29%; height: 25%; width: 39%;"></div>
+    <div id="p4deck" style="background-color: darkseagreen; position: absolute; top: 18%; right: 8%; height: 60%; width: 18%;"></div>
+
+    <!-- div for showing card that player has drawn -->
+    <div id="drawn_card" style="background-color:yellow; position:absolute; top: 340px; left:1000px; height: 500px; width: 400px; display: none; "></div>
+    <div id="discard" style="background-color: violet; position:absolute; top: 840px; left: 1100px; height: 100px; width: 200px; display: none;">
+        <h style="font-family: cursive; font-size: 30px; position: absolute; top: 25%; left: 25%;">Discard</h>
+    </div>
+
+    <!--button for ending turn-->
+    <button id="end turn" style="background-color: blue; font-family: cursive; font-size: 30px; 
+        position: absolute; color: rgb(218, 82, 220); bottom: 20px; left: 600px; height: 80px; width: 200px; display: none;">End_Turn</button>
+
+    <!-- button for starting game -->
+    <button id="start" style="background-color: rgb(185, 180, 45); 
+    position: absolute; bottom: 20px; left: 880px; height: 80px; width:250px; font-size: 40px; font-family: cursive;">
+        Start
+    </button>
+
+    <!--div for showing whose turn it is-->
+    <div id="whose turn" style="position:absolute; bottom: 20px; left: 1600px; font-family: cursive; font-size: 50px;">Your turn</div>
+
+    <!--div for guiding through special cards-->
+    <div id="spec effect" style="position: absolute; top:50%; left: 50%; transform: translate(-50%, 0%); font-family: cursive; font-size: 40px;"></div>
+
+    <!--winner announcement-->
+    
+
+    <!-- chatbox -->
+    <div id="chatbox" class="chat" style="background-color: rgb(255,255,255,0); overflow: auto; bottom:22px;">
+        <ul class="msg" id="messages"></ul>
+    </div>
+
+    <form id="form" action="">
+        <input id="input" autocomplete="off" style="position:fixed; right: 47px; bottom: 0px; width: 545px"/>
+        <button style="position:fixed; bottom: 0px; right: 0px">Send</button>
+    </form>
+
+    <div id="numPlayer" style="position:absolute; bottom: 0px; left: 30px; font-size: 40px; font-family:cursive;" >
+        <strong > 0/4 </strong>
+    </div>
+
+    <!-- <h style="font-family: cursive; font-size: 40px;">Card1</h> -->
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script> 
+        var socket = io();
+
+        var messages = document.getElementById('messages');
+        var form = document.getElementById('form'); // chat form
+        var start = document.getElementById('start'); // start button
+        const center_deck = document.getElementById('deck'); // div for center deck
+        const flip_deck = document.getElementById('flip'); // div for deck that are dropped
+        const drawn_card = document.getElementById('drawn_card'); // div for showing drawn card
+        const discard = document.getElementById('discard'); // button for dropping drawn card
+        const end_turn = document.getElementById('end turn'); // button for ending turn
+        const effect = document.getElementById('spec effect');
+
+        /* const back = document.createElement('img');
+        back.style.height = '300px';
+        back.style.width = '220px';
+        back.src = "/rat-a-tat-cat-back.png";
+        center_deck.appendChild(back); */
+
+        var player_num;
+        // player_card = 
+        var player_card = new Array; 
+        const turn = [document.getElementById('turn1'), document.getElementById('turn2'), document.getElementById('turn3'), document.getElementById('turn4')];
+        var my_deck = new Array(4); 
+        var other_players_cards;
+        var drawn_card_face;
+        var num_draw = 1;// represents how many cards a player can draw in current turn.
+        // Usually it's zero but when it's draw, player gets more draw. When this number reaches zero, their turn is effectively over
+
+        var p1card1;
+        var p1card2;
+        var p1card3;
+        var p1card4;
+        const deck1 = document.getElementById('p1deck');
+
+        var p2card1;
+        var p2card2;
+        var p2card3;
+        var p2card4;
+        const deck2 = document.getElementById('p2deck');
+
+        var p3card1;
+        var p3card2;
+        var p3card3;
+        var p3card4;
+        const deck3 = document.getElementById('p3deck');
+
+        var p4card1;
+        var p4card2;
+        var p4card3;
+        var p4card4;
+        const deck4 = document.getElementById('p4deck');
+
+        function positionCard(card, pos, tp, lft, ht, wdth, color) {
+            card.style.position = pos;
+            card.style.top = tp;
+            card.style.left = lft;
+            card.style.height = ht;
+            card.style.width = wdth;
+            card.style.backgroundColor = color;
+        }
+
+        const start_end_game = () => {
+            socket.emit('start game');
+        }
+
+        start.addEventListener('click', start_end_game);
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) { // if input message is not empty
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        socket.emit('enter');
+
+        socket.on('enter', function(num) {
+            var item = document.createElement('li');
+            item.innerHTML = '<b>player' + num + "has entered</b>";
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+            numPlayer.innerHTML = num + '/4';
+            // var img = document.createElement('img');
+            // img.src = "/images/rat-a-tat-cat-back.png";
+            // document.getElementById('card').src = "/images/rat-a-tat-cat-back.png";
+        });
+
+        socket.on('chat message', function(msg) {
+            var item = document.createElement('li');
+            
+            item.innerHTML = '<b>' + msg + '</b>';
+            messages.appendChild(item);
+            // form.scrollTo(0, document.body.scrollHeight);
+            const chatbox = document.getElementById('chatbox');
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+
+        socket.on('start game', function(numPlayer, your_num) {
+            start.innerHTML = 'Rat-A-Tat-Cat!';
+            start.style.width = '350px';
+            start.removeEventListener('click', start_end_game);
+
+            p1card1 = document.createElement('div');
+            p1card2 = document.createElement('div');
+            p1card3 = document.createElement('div');
+            p1card4 = document.createElement('div');
+            p1card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+            p1card2.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+            p1card3.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+            p1card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+            
+
+            positionCard(p1card1, 'absolute', '50px', '75px', '200px', '150px', 'red')
+            positionCard(p1card2, 'absolute', '50px', '300px', '200px', '150px', 'red')
+            positionCard(p1card3, 'absolute', '50px', '525px', '200px', '150px', 'red')
+            positionCard(p1card4, 'absolute', '50px', '750px', '200px', '150px', 'red')
+            
+            deck1.appendChild(p1card1);
+            deck1.appendChild(p1card2);
+            deck1.appendChild(p1card3);
+            deck1.appendChild(p1card4);
+
+            if (numPlayer >= 2) {
+                p2card1 = document.createElement('div');
+                p2card2 = document.createElement('div');
+                p2card3 = document.createElement('div');
+                p2card4 = document.createElement('div');
+                
+
+                p2card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p2card1.style = "rotate: 90deg;";
+                p2card2.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p2card2.style = "rotate: 90deg;";
+                p2card3.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p2card3.style = "rotate: 90deg;";
+                p2card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p2card4.style = "rotate: 90deg;";
+
+                positionCard(p2card1, 'absolute', '40px', '130px', '200px', '150px', 'red');
+                positionCard(p2card2, 'absolute', '220px', '130px', '200px', '150px', 'red');
+                positionCard(p2card3, 'absolute', '400px', '130px', '200px', '150px', 'red');
+                positionCard(p2card4, 'absolute', '580px', '130px', '200px', '150px', 'red');
+
+                deck2.appendChild(p2card1);
+                deck2.appendChild(p2card2);
+                deck2.appendChild(p2card3);
+                deck2.appendChild(p2card4);
+            } 
+            
+            if (numPlayer >= 3) {
+                p3card1 = document.createElement('div');
+                p3card2 = document.createElement('div');
+                p3card3 = document.createElement('div');
+                p3card4 = document.createElement('div');
+                p3card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p3card2.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p3card3.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p3card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                
+                positionCard(p3card1, 'absolute', '50px', '75px', '200px', '150px', 'red');
+                positionCard(p3card2, 'absolute', '50px', '300px', '200px', '150px', 'red');
+                positionCard(p3card3, 'absolute', '50px', '525px', '200px', '150px', 'red');
+                positionCard(p3card4, 'absolute', '50px', '750px', '200px', '150px', 'red');
+
+                deck3.appendChild(p3card1);
+                deck3.appendChild(p3card2);
+                deck3.appendChild(p3card3);
+                deck3.appendChild(p3card4);
+            } 
+            
+            if (numPlayer == 4) {
+                p4card1 = document.createElement('div');
+                p4card2 = document.createElement('div');
+                p4card3 = document.createElement('div');
+                p4card4 = document.createElement('div');
+                p4card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p4card1.style = "rotate: -90deg;";
+                p4card2.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p4card2.style = "rotate: -90deg;";
+                p4card3.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p4card3.style = "rotate: -90deg;";
+                p4card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';
+                p4card4.style = "rotate: -90deg;";
+
+                positionCard(p4card1, 'absolute', '40px', '130px', '200px', '150px', 'red');
+                positionCard(p4card2, 'absolute', '220px', '130px', '200px', '150px', 'red');
+                positionCard(p4card3, 'absolute', '400px', '130px', '200px', '150px', 'red');
+                positionCard(p4card4, 'absolute', '580px', '130px', '200px', '150px', 'red');
+
+                deck4.appendChild(p4card1);
+                deck4.appendChild(p4card2);
+                deck4.appendChild(p4card3);
+                deck4.appendChild(p4card4);
+            }
+
+            player_num = your_num;
+            const you = document.createElement('div');
+            you.innerHTML = 'You'
+            you.style.fontFamily = 'cursive';
+            you.style.fontSize = '40px'
+            you.style.position = 'absolute';
+            you.style.left = '50%';
+            you.style.transform = 'translate(-50%, 0%)';
+            //<div style="font-family: cursive; font-size:45px; position:absolute; left:50%; transform: translate(-50%, 0%);">You</div>
+
+            if (your_num == 0) {
+                my_deck[0] = p1card1;
+                my_deck[1] = p1card2;
+                my_deck[2] = p1card3;
+                my_deck[3] = p1card4;
+                deck1.appendChild(you);
+            } else if (your_num == 1) {
+                my_deck[0] = p2card1;
+                my_deck[1] = p2card2;
+                my_deck[2] = p2card3;
+                my_deck[3] = p2card4;
+                deck2.appendChild(you);
+            } else if (your_num == 2) {
+                my_deck[0] = p3card1;
+                my_deck[1] = p3card2;
+                my_deck[2] = p3card3;
+                my_deck[3] = p3card4;
+                deck3.appendChild(you);
+            } else {
+                my_deck[0] = p4card1;
+                my_deck[1] = p4card2;
+                my_deck[2] = p4card3;
+                my_deck[3] = p4card4;
+                deck4.appendChild(you);
+            } 
+
+            var i = 0;
+            var how_many_other = 0;
+            other_players_cards = new Array(numPlayer * 4 - 4);
+            
+            if (player_num != 0 && numPlayer - 1 > how_many_other) {
+                const k = i + 4;
+                other_players_cards[i] = p1card1;
+                other_players_cards[i + 1] =  p1card2;
+                other_players_cards[i + 2] = p1card3;
+                other_players_cards[i + 3] = p1card4;
+                how_many_other++;
+                i += 4;
+                /* p1card1.addEventListener('click', swap_target[0]);
+                p1card3.addEventListener('click', swap_target[1]);
+                p1card3.addEventListener('click', swap_target[2]);
+                p1card4.addEventListener('click', swap_target[3]);
+                i += 4; */
+            } 
+            if (player_num != 1 && numPlayer - 1 > how_many_other) {
+                const k = i + 4;
+                other_players_cards[i] = p2card1;
+                other_players_cards[i + 1] =  p2card2;
+                other_players_cards[i + 2] = p2card3;
+                other_players_cards[i + 3] = p2card4;
+                how_many_other++;
+                i += 4;
+                /* p2card1.addEventListener('click', swap_target[4]);
+                p2card2.addEventListener('click', swap_target[5]);
+                p2card3.addEventListener('click', swap_target[6]);
+                p2card4.addEventListener('click', swap_target[7]);
+                i += 4; */
+            }
+            if (player_num != 2 && numPlayer - 1 > how_many_other) {
+                const k = i + 4;
+                other_players_cards[i] = p3card1;
+                other_players_cards[i + 1] =  p3card2;
+                other_players_cards[i + 2] = p3card3;
+                other_players_cards[i + 3] = p3card4;
+                how_many_other++;
+                i += 4;
+                /* p3card1.addEventListener('click', swap_target[8]);
+                p3card2.addEventListener('click', swap_target[9]);
+                p3card3.addEventListener('click', swap_target[10]);
+                p3card4.addEventListener('click', swap_target[11]);
+                i += 4; */
+            }
+            if (player_num != 3 && numPlayer - 1 > how_many_other) {
+                const k = i + 4;
+                other_players_cards[i] = p4card1;
+                other_players_cards[i + 1] =  p4card2;
+                other_players_cards[i + 2] = p4card3;
+                other_players_cards[i + 3] = p4card4;
+                how_many_other++;
+                i += 4;
+                /* p4card1.addEventListener('click', swap_target[12]);
+                p4card2.addEventListener('click', swap_target[13]);
+                p4card3.addEventListener('click', swap_target[14]);
+                p4card4.addEventListener('click', swap_target[15]);
+                i += 4; */
+            }
+        });
+
+        socket.on('give card', function(card) {
+            player_card.push(card);
+            // console.log(card_value);
+        });
+
+        
+        socket.on('initial peek', function() {
+            for (let i = 0; i < player_card.length; i++) {
+                console.log(player_card[i]);
+            } 
+            if (player_num == 0) {
+                p1card1.innerHTML = '<img src="'+ player_card[0].image + '" style="height: 200px; width: 150px;"> ';
+                p1card4.innerHTML = '<img src="'+ player_card[3].image + '" style="height: 200px; width: 150px;"> '
+                setTimeout(() => {
+                    p1card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                    p1card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                }, 4000);
+            } else if (player_num == 1) {
+                p2card1.innerHTML = '<img src="'+ player_card[0].image + '" style="height: 200px; width: 150px;"> '
+                p2card4.innerHTML = '<img src="'+ player_card[3].image + '" style="height: 200px; width: 150px;"> '
+                setTimeout(() => {
+                    p2card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                    p2card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                }, 4000);
+            } else if (player_num == 2) {
+                p3card1.innerHTML = '<img src="'+ player_card[0].image + '" style="height: 200px; width: 150px;"> '
+                p3card4.innerHTML = '<img src="'+ player_card[3].image + '" style="height: 200px; width: 150px;"> '
+                setTimeout(() => {
+                    p3card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                    p3card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                }, 4000);
+            } else {
+                p4card1.innerHTML = '<img src="'+ player_card[0].image + '" style="height: 200px; width: 150px;"> '
+                p4card4.innerHTML = '<img src="'+ player_card[3].image + '" style="height: 200px; width: 150px;"> '
+                setTimeout(() => {
+                    p4card1.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                    p4card4.innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                }, 4000);
+            }
+        });
+
+        socket.on('one', function(card) {
+            // console.log('hey thats the truth')
+            document.getElementById('flip').innerHTML = '<img src="'+ card.image + '" style="height: 300px; width: 220px;"> '
+        });
+
+        function draw_card() { // trigger function when user draws from center_deck
+            socket.emit('draw card');
+            center_deck.removeEventListener('click', draw_card);
+            flip_deck.removeEventListener('click', draw_from_flip);
+        }
+
+        function draw_from_flip() { // trigger function when user draws from flipped deck
+            // console.log('flip');
+            socket.emit('draw from flip');
+            num_draw--;
+            center_deck.removeEventListener('click', draw_card);
+            flip_deck.removeEventListener('click', draw_from_flip);
+        }
+
+        socket.on('turn change', function(whose_turn) {
+            // console.log(socket.id);
+            turn.forEach((arrow) => {
+                arrow.style.display = "none";
+            });
+            effect.innerHTML = '';
+            num_draw = 1;
+
+            turn[whose_turn].style.display = "block";
+            document.getElementById('whose turn').innerHTML = 'Player' + (whose_turn + 1) + ' turn';
+
+            if (whose_turn == player_num) { // indicate it's my turn
+                start.addEventListener('click', start_end_game);
+                center_deck.addEventListener('click', draw_card);
+                flip_deck.addEventListener('click', draw_from_flip);
+                document.getElementById('whose turn').innerHTML = 'Your turn';
+            }
+        });
+
+        function change_turn () {
+            socket.emit('turn change');
+            start.removeEventListener('click', start_end_game);
+            end_turn.style.display = 'none';
+            end_turn.removeEventListener('click', change_turn);
+        }
+
+        function drop_drawn_card() {
+            // drawn_card.innerHTML = '';
+            drawn_card.style.display = "none";
+            discard.style.display = "none";
+
+            socket.emit('add to flip deck', drawn_card_face);
+            socket.emit('drop card');
+
+            discard.removeEventListener('click', drop_drawn_card);
+            my_deck.forEach((each_card, i) => {
+                each_card.removeEventListener('click', drop_my_card[i]); 
+            });
+
+            if (num_draw <= 0) {
+                end_turn.style.display = 'block';
+                end_turn.addEventListener('click', change_turn);
+            } else {
+                center_deck.addEventListener('click', draw_card);
+            }
+        }
+
+        const drop_my_card = [()=>drop_card(0), ()=>drop_card(1), ()=>drop_card(2), ()=>drop_card(3)]; 
+
+        function drop_card(index) { // drop one of my card
+            // drawn_card.innerHTML = '';
+            drawn_card.style.display = "none";
+            discard.style.display = "none";
+
+            socket.emit('add to flip deck', player_card[index]);
+            player_card[index] = drawn_card_face;
+            socket.emit('keep card', index+1);
+
+            console.log(player_card[0].value + ' ' + player_card[1].value + ' ' + player_card[2].value + ' ' + player_card[3].value);
+            
+            my_deck.forEach((each_card, i) => {
+                each_card.removeEventListener('click', drop_my_card[i]); 
+            });
+            discard.removeEventListener('click', drop_drawn_card);
+
+            if (num_draw <= 0) {
+                end_turn.style.display = 'block';
+                end_turn.addEventListener('click', change_turn);
+            } else {
+                center_deck.addEventListener('click', draw_card);
+            }
+        }
+        
+        socket.on('drop card', (turn) => {
+            effect.innerHTML = "player " + (turn+1) + " dropped the card ";
+        })
+
+        socket.on('keep card', (turn, index) =>{
+            effect.innerHTML = "player " + (turn+1) + " dropped card " + index;
+        });
+
+        /*---------------------------------------------------------------------Code for handling peek---------------------------------------------------------------------*/
+
+        const reveal_my_card = [()=>reveal_card(0), ()=>reveal_card(1), ()=>reveal_card(2), ()=>reveal_card(3)];
+
+        function reveal_card(index) {
+            my_deck[index].innerHTML = '<img src="'+ player_card[index].image + '" style="height: 200px; width: 150px;"> ';
+            socket.emit('peek', index + 1);
+ 
+            setTimeout(()=> {
+                my_deck[index].innerHTML = '<img src="/rat-a-tat-cat-back.png" style="height: 200px; width: 150px;"> ';;
+                if (num_draw <= 0) {
+                    end_turn.style.display = 'block';
+                    end_turn.addEventListener('click', change_turn);
+                }
+            }, 3000);
+            if (num_draw > 0) {
+                center_deck.addEventListener('click', draw_card);
+            }
+            my_deck.forEach( (each_card, index) => {
+                each_card.removeEventListener('click', reveal_my_card[index]);
+            });
+        }
+
+        socket.on('peek', (player_i, peek) => {
+            effect.innerHTML = 'player ' + player_i + ' peeked at card ' + peek;
+        })
+
+        function drop_peek() {
+            // drawn_card.innerHTML = '';
+            drawn_card.style.display = "none";
+            socket.emit('add to flip deck', drawn_card_face);
+            effect.innerHTML = 'choose card to peek';
+
+            drawn_card.removeEventListener('click', drop_peek);
+            my_deck.forEach( (each_card, index) => {
+                each_card.addEventListener('click', reveal_my_card[index]);
+            });
+        }
+
+        /*---------------------------------------------------------------------Code for handling peek---------------------------------------------------------------------*/
+
+        /*---------------------------------------------------------------------Code for handling swap---------------------------------------------------------------------*/
+
+        const swap_my_card = [()=>swap_card_mine(0), ()=>swap_card_mine(1), ()=>swap_card_mine(2), ()=>swap_card_mine(3)];
+
+        var swap_my_target_i;
+
+        const swap_target = [()=> swap_card_target(0, 0), ()=> swap_card_target(0, 1), ()=> swap_card_target(0, 2), ()=> swap_card_target(0, 3),
+         ()=> swap_card_target(1, 0), ()=> swap_card_target(1, 1), ()=> swap_card_target(1, 2), ()=> swap_card_target(1, 3),
+         ()=> swap_card_target(2, 0), ()=> swap_card_target(2, 1), ()=> swap_card_target(2, 2), ()=> swap_card_target(2, 3)];
+
+        function drop_swap() {
+            // drawn_card.innerHTML = '';
+            drawn_card.style.display = "none";
+            socket.emit('add to flip deck', drawn_card_face);
+
+            drawn_card.removeEventListener('click', drop_swap);
+            effect.innerHTML = 'choose one of your cards to swap';
+            my_deck.forEach( (each_card, index) => {
+                each_card.addEventListener('click', swap_my_card[index]);
+            });
+        }        
+
+        function swap_card_mine(my_card_index) {
+            swap_my_target_i = my_card_index;
+            effect.innerHTML =  'you have chosen card' + (swap_my_target_i + 1) + ' to swap' 
+            + 'now choose one of other players cards to swap with one of yours';
+            
+            other_players_cards.forEach( (other_players_card, index)=> {
+                other_players_card.addEventListener('click', swap_target[index]);
+            });
+
+            my_deck.forEach((card, index) => {
+                card.removeEventListener('click', swap_my_card[index]);
+            })
+        }
+
+        function swap_card_target(target_player_index, target_card_index) {
+            if (player_num <= target_player_index) { target_player_index++; }
+            socket.emit('swap', player_card[swap_my_target_i], swap_my_target_i, target_player_index, target_card_index);
+            // effect.innerHTML = 'you have chosen player ' + (target_player_index + 1) + ' Card ' + (target_card_index+1);
+
+            other_players_cards.forEach((card, index) => {
+                card.removeEventListener('click', swap_target[index]);
+            });
+
+            if (num_draw <= 0) {
+                end_turn.style.display = 'block';
+                end_turn.addEventListener('click', change_turn);
+            } else {
+                center_deck.addEventListener('click', draw_card);
+            }
+        }
+
+        // responding to other player swapping one of their cards with mine
+        socket.on('swap', (swapped_card, targeted_card_i) => {
+            console.log(player_card[targeted_card_i]);
+            socket.emit('retrieve target card', player_card[targeted_card_i]);
+            player_card[targeted_card_i] = swapped_card;
+        });
+
+        // receiving the card
+        socket.on('retrieve target card', (op_card) => {
+            console.log(op_card);
+            player_card[swap_my_target_i] = op_card;
+        });
+
+        socket.on('swap statement', (swap_statement) => {
+            //effect.style.transform = 'translate(0%, 0%);'
+            effect.innerHTML = swap_statement;
+        });
+
+        /*---------------------------------------------------------------------Code for handling swap---------------------------------------------------------------------*/
+
+        /*---------------------------------------------------------------------Code for handling draw---------------------------------------------------------------------*/
+
+
+        function drop_draw() {
+            drawn_card.style.display = 'none';
+            socket.emit('add to flip deck', drawn_card_face);
+            if (num_draw > 0) center_deck.addEventListener('click', draw_card);
+            else {
+                end_turn.style.display = 'block';
+                end_turn.addEventListener('click', change_turn);
+            }
+            drawn_card.removeEventListener('click', drop_draw);
+        }
+
+        /*---------------------------------------------------------------------Code for handling draw---------------------------------------------------------------------*/
+
+        socket.on('draw card', (card, card_left) => { // when user draws a card from center deck
+            console.log('you have drawn: ' + card.value + ' effect: ' + card.special);
+            drawn_card_face = card;
+            drawn_card.style.display = "block";
+            if (!card_left) {num_draw = -10;}
+            num_draw--;
+
+            // if there is no more card left amidst picking additional cards granted by draw
+            // Then we can address issue by setting num_draw to zero instantly as it signals the end of the turn except
+            // when the last card picked is another draw because upon clicking on drawn_card, it instantly adds eventListener to center deck
+            // if the last card is not draw, the eventlisteners on swap, normal, or peek cards, when num_draw is not zero, do not add
+            // another eventlistener to center_deck and bring in end_turn button, which makes sense 
+            // so we are going to add condition to drop_draw when it tries to add eventListener to center_deck
+            // to account for  +2 to num_draw when user player picks draw, set num_draw -10. However, this may cause problem
+            // when the last card is not draw because they only end turn only when num_draw is equal to 0. When num_draw is negative number,
+            // they choose path that's meant to be triggered when the turn is still not over, Thus, we are going to fix the trigger condition to
+            // bring up end_turn button from num_draw == 0 to num_draw <= 0
+            // Re-test case where last drawn card is peek, normal, or swap when num_drawn is still above 0
+
+            // what about adding -1 card at the end that signals the end? then it would require one more click on the center_deck to make
+            // end_turn button appear, which seems counter-intuitive from users' perspective
+            drawn_card.innerHTML = '<img src="'+ card.image + '" style="height: 500px; width: 400px;"> ';
+
+            if (card.special == 'draw') {
+                num_draw += 2; 
+                drawn_card.addEventListener('click', drop_draw);
+                socket.emit('picked draw');
+            } else if (card.special == 'swap') {
+                drawn_card.addEventListener('click', drop_swap);
+                socket.emit('picked swap');
+            } else if (card.special == 'peek') {
+                drawn_card.addEventListener('click', drop_peek);
+                socket.emit('picked peek');
+            } else {
+                // keeping the card and dropping one of the card the player already has 
+                discard.style.display = "block";
+                my_deck.forEach( (each_card, index)=> {
+                    each_card.addEventListener('click', drop_my_card[index]);
+                });
+                discard.addEventListener('click', drop_drawn_card);
+            }
+        });
+
+        socket.on('picked draw', (turn) => {
+            effect.innerHTML = 'player ' + turn + ' picked draw';
+        });
+
+        socket.on('picked swap', (turn) => {
+            effect.innerHTML = 'player ' + turn + ' picked swap';
+        });
+
+        socket.on('picked peek', (turn) => {
+            effect.innerHTML = 'player ' + turn + 'picked peek';
+        })
+
+        socket.on('add to flip deck', (val) => {
+            flip_deck.innerHTML = '<img src="'+ val.image + '" style="height: 300px; width: 200px;"> ';
+        });
+
+        socket.on('draw from flip', (val) => {
+            console.log('draw from flip');
+            drawn_card.style.display = "block";
+            drawn_card.innerHTML = '<img src="'+ val.image + '" style="height: 500px; width: 400px;"> ';
+
+            drawn_card_face = val;
+            my_deck.forEach( (each_card, index)=> {
+                each_card.addEventListener('click', drop_my_card[index]);
+            });
+        });
+
+        socket.on('outta cards', () => {
+            center_deck.innerHTML = 'Out of Cards';
+        })
+
+        socket.on('rat-a-tat-cat', (index) => {
+            effect.innerHTML = 'player ' + (index + 1) + 'called Rat-A-Tat-Cat';
+        });
+
+        // Declaring the winner
+        socket.on('winner', (who) => {
+            // console.log('bruh');
+            if (who == player_num) { alert('Winner Winner Chicken Dinner'); }
+            else { alert ('Player ' + (who + 1) + ' Wins! maybe Next Time...'); }
+            //winner_dec.style.transform = 'translate(-50%, -50%)';
+        });
+
+        // caculating the score to decide winner
+        socket.on('whos winner', () => {
+            var sum = 0;
+            player_card.forEach((card)=> {
+                sum += card.value;
+            });
+            console.log('My total is: ' + sum);
+            socket.emit('whos winner', sum);
+        });
+        
+    </script>
+
+</body>
+</html>
